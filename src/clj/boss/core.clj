@@ -1,6 +1,5 @@
 (ns boss.core
   (:use [incanter.stats :only (sample-normal)]
-        clojure.contrib.combinatorics
         [clojure.contrib.math :only (floor)])
   (:require [incanter.core :as i]
             [incanter.stats :as s]
