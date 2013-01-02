@@ -52,7 +52,7 @@
      :treatment-pool treatment-pool
      :treatment-group (sub-sample treatment-pool n)}))
 
-;; (def data (data-map 1000 3 50))
+(def data (data-map 1000 3 50))
 
 (defn hist-treatment []
   (let [X (map first (:treatment-group data))]
@@ -104,6 +104,7 @@
 
 (defn find-obs
   [control-pool [bin count]]
+  (prn bin)
   (take count
         (shuffle (filter (partial general-interval bin)
                          (apply map vector control-pool)))))
@@ -111,6 +112,7 @@
 (defn control-group [control-pool treatment-group B]
   (let [bins (empirical-bins treatment-group B)
         ref (ref-freq treatment-group bins)]
+    (prn (first ref))
     (pmap (partial find-obs control-pool) ref)))
 
 (defn obj-fn [cb tb]
