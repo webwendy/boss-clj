@@ -14,4 +14,4 @@ curl -O  https://raw.github.com/technomancy/leiningen/preview/bin/lein
 chmod u+x lein lein1
 ./lein
 
-echo 'Done! Run "./boss help" for options.'
+echo 'Done! Change into the boss-clj directory and Run: ./boss help'
