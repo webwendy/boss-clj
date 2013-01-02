@@ -111,7 +111,7 @@
 (defn control-group [control-pool treatment-group B]
   (let [bins (empirical-bins treatment-group B)
         ref (ref-freq treatment-group bins)]
-    (map (partial find-obs control-pool) ref)))
+    (pmap (partial find-obs control-pool) ref)))
 
 (defn obj-fn [cb tb]
   (let [d (- cb tb)]
