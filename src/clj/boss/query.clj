@@ -1,6 +1,8 @@
 (ns boss.query
   (:use boss.core
-        [incanter.stats :only (sample-normal)])
+        cascalog.api)
   (:require [incanter.core :as i]
             [incanter.stats :as s]
-            [incanter.charts :as c]))
+            [incanter.charts :as c]
+            [cascalog.ops :as ops]))
+

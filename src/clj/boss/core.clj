@@ -1,6 +1,7 @@
 (ns boss.core
   (:use [incanter.stats :only (sample-normal)]
-        [clojure.contrib.math :only (floor)])
+        [clojure.contrib.math :only (floor)]
+        [clojure.contrib.combinatorics :only (cartesian-product)])
   (:require [incanter.core :as i]
             [incanter.stats :as s]
             [incanter.charts :as c]))
@@ -27,10 +28,9 @@
 
 (defn dgp
   "accepts a vector of characteristics and a vector of parameter
-  coefficients.  returns the non-stochastic value from the data
-  generating process.  the default reflects the DGP with three
-  characteristics found in Equation (6) on page 8 of the Cho (2012)
-  paper."
+  coefficients.  returns the value from the data generating process,
+  with the default reflecting the DGP with k=3 found in Equation (6)
+  on page 8 of the Cho (2012) paper."
   [xs {:keys [bs] :or {bs [14 7 11 -1]}}]
   (reduce + (map * bs (apply conj [1] xs))))
 
