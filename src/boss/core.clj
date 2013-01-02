@@ -52,7 +52,7 @@
      :treatment-pool treatment-pool
      :treatment-group (sub-sample treatment-pool n)}))
 
-(def data (data-map 1000 3 500))
+;; (def data (data-map 1000 3 50))
 
 (defn hist-treatment []
   (let [X (map first (:treatment-group data))]
@@ -73,19 +73,21 @@
   (partition 2 1 bpoint-seq))
 
 (defn all-bins [& [colls]]
-  (apply cartesian-product colls))
+  (map vec (apply cartesian-product colls)))
 
 (defn empirical-bins [pool B]
   (let [breaks (map (partial breakpoints B)
-                    (i/trans pool))]
+                    (apply map vector pool))]
     (all-bins (map moving-intervals breaks))))
 
-(defn in-interval? [[lb ub] x]
-  (and (>= x lb) (<= x ub)))
+(defn in-interval?
+  [[lb ub] x]
+  (and (>= x (- lb 0.00001))
+       (<= x (+ ub 0.00001))))
 
-(defn base-count [bin]
-  (let [coll (:treatment-group data)]
-    (map (partial in-interval? bin) coll)))
+;; (defn base-count [bin]
+;;   (let [coll (:treatment-group data)]
+;;     (map (partial in-interval? bin) coll)))
 
 (defn general-interval [bound-seq val-seq]
   (every? true? (map in-interval? bound-seq val-seq)))
@@ -95,26 +97,21 @@
     (ffirst (filter #(true? (second %))
                     (map vector bins truth-seq)))))
 
-(defn interval-count [bins pool]
-  (frequencies (map #(val->bin % bins) pool)))
+(defn ref-freq
+  [treatment-pool bins]
+  (let [freq-map (frequencies (map #(val->bin % bins) treatment-pool))]
+    (map vec freq-map)))
 
-;; (defn ref-freq [pool B]
-;;   (let [bins (empirical-bins pool B)]
-;;     (map interval-count bins pool)))
+(defn find-obs
+  [control-pool [bin count]]
+  (take count
+        (shuffle (filter (partial general-interval bin)
+                         (apply map vector control-pool)))))
 
-;; (defn in-interval?
-;;   ([[lb ub] x]
-;;      (and (>= x lb) (<= x ub)))
-;;   ([[[lb0 ub0] [lb1 ub1]] x0 x1]
-;;      (and (in-interval? [lb0 ub0] x0)
-;;           (in-interval? [lb1 ub1] x1))))
-
-(defn bin-count [coll1 coll2 bin]
-  (let [truth-seq (map (partial in-interval? bin) coll1 coll2)]
-    (count (filter true? truth-seq))))
-
-(defn count-seq [coll1 coll2 bins]
-  (map (partial bin-count coll1 coll2) bins))
+(defn control-group [control-pool treatment-group B]
+  (let [bins (empirical-bins treatment-group B)
+        ref (ref-freq treatment-group bins)]
+    (map (partial find-obs control-pool) ref)))
 
 (defn obj-fn [cb tb]
   (let [d (- cb tb)]
