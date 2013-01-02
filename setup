@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Get the boss-clj code:
+echo 'Getting the BOSS code...'
+git clone https://github.com/eightysteele/boss-clj.git
+cd boss-clj
+git checkout master
+
+# Install lein:
+echo 'Installing lein...'
+curl -O https://raw.github.com/technomancy/leiningen/stable/bin/lein
+mv lein lein1
+curl -O  https://raw.github.com/technomancy/leiningen/preview/bin/lein
+chmod u+x lein lein1
+./lein
+
+echo 'Done! Run "./boss help" for options.'
