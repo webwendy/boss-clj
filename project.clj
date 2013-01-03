@@ -16,10 +16,17 @@
                  [incanter/incanter-charts "1.3.0-SNAPSHOT"]
                  [lein-swank "1.4.4"]
                  [org.clojure/clojure-contrib "1.2.0"]
-                 [org.clojure/tools.cli "0.2.2"]]
+                 [org.clojure/tools.cli "0.2.2"]
+                 [cascalog "1.9.0"]
+                 [cascalog-checkpoint "0.1.1"]
+                 [backtype/dfs-datastores "1.1.3"]
+                 [backtype/dfs-datastores-cascading "1.2.0"]
+                 [org.apache.thrift/libthrift "0.8.0"
+                  :exclusions [org.slf4j/slf4j-api]]]
   :profiles {:dev {:dependencies [[org.apache.hadoop/hadoop-core "0.20.2-dev"]
                                   [midje-cascalog "0.4.0"]
                                   [incanter/incanter-charts "1.3.0"]]
                    :plugins [[lein-swank "1.4.4"]
-                             [lein-midje "2.0.0-SNAPSHOT"]]}}
-)
+                             [lein-midje "2.0.0-SNAPSHOT"]
+                             [lein-emr "0.1.0-SNAPSHOT"]]}}
+  )
