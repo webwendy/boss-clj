@@ -39,3 +39,26 @@ That will take a little while to download and install everything. When it is don
 cd boss-clj
 ./boss help
 ```
+
+## Initial results
+
+We start with a control and treatment pool, each with 100,000
+observations.  From the treatment pool, we select a subsample with
+certain characteristics to represent the treatment group -- those who
+actually received treatment.  This distribution of the characteristics
+of the treatment group cannot easily be parameterized.  The idea is to
+non-parametrically select a group from the control pool that closely
+resembles the treatment group.
+
+Consider, for example, the data generating process in Equation (6) of
+the Cho (2012) paper on the BOSS algorithm.  Each observation has
+three characteristics, such that the covariate matrix is of dimension
+_N x 3_.  Each covariate is distributed standard normal.  The
+distribution of the first covariate is diplayed below for both the
+control- and treatment-pool:
+
+![]()
+
+
+
+

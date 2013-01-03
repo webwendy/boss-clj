@@ -80,7 +80,7 @@
   "plot the histogram for the treatment group."
   [& {:keys [idx-fn] :or {idx-fn first}}]
   (let [data (data-map 100000 500)
-        X (map idx-fn (:treatment data))]
+        X (map idx-fn (:control data))]
     (c/histogram X :nbins 50 :series-label "X1")))
 
 (defn bounding-interval
