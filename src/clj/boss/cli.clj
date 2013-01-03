@@ -23,8 +23,7 @@
          ["-p" "--num_population" "Number of people in population group."
           :parse-fn #(Integer. %)
           :default 100000]
-         ["-w" "--workspace" "Workspace directory to save graphs to."
-          :default "/tmp/hylo-sim.png"])
+         ["-w" "--workspace" "Workspace directory to save graphs to."])
     (catch Exception e (do (println (.getMessage e)) nil))))
 
 (defn- match
@@ -32,11 +31,16 @@
   [args-map]
   (let [N (:num_population args-map)
         n (:num_treatment args-map)
+        workspace (:workspace args-map)
         num-bins (:num_bins args-map)
         data (data-map :N N :n n)
-        control-grp (control-group (:control data) (:treatment data) num-bins)]
-    (i/view
-     (c/histogram (map first control-grp) :nbins 50 :series-label "X1")))
+        control-grp (control-group (:control data) (:treatment data) num-bins)
+        graph (c/histogram (map first control-grp) :nbins 50 :series-label "X1")]
+    (if workspace
+      (do
+        (println (format "Saving match graph to %s" workspace))
+        (i/save graph workspace))
+      (i/view graph)))
   (println "Match complete."))
 
 (defn -main
