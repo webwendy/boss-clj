@@ -31,7 +31,7 @@
   coefficients.  returns the value from the data generating process,
   with the default reflecting the DGP with k=3 found in Equation (6)
   on page 8 of the Cho (2012) paper."
-  [x1 x2 x3 & {:keys [bs error-sd] :or {bs [14 7 11 -1] error-sd 1}}]
+  [[x1 x2 x3] & {:keys [bs error-sd] :or {bs [14 7 11 -1] error-sd 1}}]
   (let [e (sample-normal 1 :sd error-sd)]
     (+ (reduce + (map * bs [1 x1 x2 x3])) e)))
 
@@ -72,14 +72,14 @@
   "accepts the number of observations in each pool and the number in
   the treatment group `n`. returns a convenient data map for the
   relevant (sub)samples."
-  [N n]
+  [& {:keys [N n] :or {N 100000 n 500}}]
   {:control (rand-data N)
    :treatment (sub-sample (rand-data N) n)})
 
 (defn hist-treatment
   "plot the histogram for the treatment group."
   [& {:keys [idx-fn] :or {idx-fn first}}]
-  (let [data (data-map 100000 500)
+  (let [data (data-map)
         X (map idx-fn (:control data))]
     (c/histogram X :nbins 50 :series-label "X1")))
 

@@ -57,8 +57,53 @@ _N x 3_.  Each covariate is distributed standard normal.  The
 distribution of the first covariate is diplayed below for both the
 control- and treatment-pool:
 
-![]()
+![](https://dl.dropbox.com/u/5365589/control-pool.png)
 
+The distribution for the same covariate in among the treated
+observations (n = 500) is much stranger, bimodal and impossible to
+characterize with a simple function.
 
+![](https://dl.dropbox.com/u/5365589/treated.png)
+
+We can, however, select similar observations from the control pool.
+The BOSS algorithm is well-suited for a Clojure/Cascalog
+implementation, since the tasks for each bin can be sent to a separate
+mapper on a Hadoop cluster.  That is, the algorithm is highly
+parallelizable.  The implementation is reasonably simple to call from
+higher-order functions in the `boss.core` namespace:
+
+```clojure
+(def data (data-map :N 100000 :n 500))
+
+(let [control-grp (control-group (:control data) (:treatment data) 16)]
+  (i/view
+   (c/histogram (map first control-group) :nbins 50 :series-label "X1")))
+```
+
+The resulting histogram looks much more similar to the covariate
+distribution of the treatment group:
+
+![](https://dl.dropbox.com/u/5365589/control-group.png)
+
+And indeed, the estimated impact is much closer to the true impact.
+Consider one run of the algorithm with B = 16.  Without implementing
+the BOSS algorithm, the estimated outcome of the control pool is 13.94
+with a standard deviation of 13.08.  The estimated outcome of the
+treated group is 40.89 with a std. dev. of 11.03.  The results suggest
+that there _was_ a treatment effect, when we know that there is not.
+We generated the data, and know for a fact that the treatment effect
+should be zero.  The estimated outcome of the BOSS control group,
+however, is 39.65 with a std. dev. of 11.37.  There is no longer a
+treatment effect, reflecting the true data generating process.
+
+This process is very similar to propensity score matching, except that
+the data is not collapsed to a single dimension before the matching.
+Rather, the matching occurs on the raw covariates.  This requires much
+more computational power -- which we have.  It also requires a lot
+more data, since the binning triggers the curse of dimensionality.  We
+have big data.
+
+This is only a very rough draft.  There are some minor issues in the
+processing.  But it is clear that the algorithm works as intended.
 
 
