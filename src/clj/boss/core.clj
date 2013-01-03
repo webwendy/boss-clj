@@ -1,7 +1,7 @@
 (ns boss.core
   (:use [incanter.stats :only (sample-normal)]
-        clojure.contrib.combinatorics
-        [clojure.contrib.math :only (floor)])
+        [clojure.contrib.math :only (floor)]
+        [clojure.contrib.combinatorics :only (cartesian-product)])
   (:require [incanter.core :as i]
             [incanter.stats :as s]
             [incanter.charts :as c]))
@@ -15,7 +15,7 @@
         k (second (i/dim Q))
         m (take k (repeatedly #(sample-normal N)))]
     (i/to-vect
-     (i/mmult (i/trans Q) (i/bind-columns m)))))
+     (i/mmult (i/trans (i/bind-columns m)) Q))))
 
 (defn scale-cond
   "accepts a threshold and x. if x exceeds the threshold, then returns
@@ -28,12 +28,12 @@
 
 (defn dgp
   "accepts a vector of characteristics and a vector of parameter
-  coefficients.  returns the non-stochastic value from the data
-  generating process.  the default reflects the DGP with three
-  characteristics found in Equation (6) on page 8 of the Cho (2012)
-  paper."
-  [xs {:keys [bs] :or {bs [14 7 11 -1]}}]
-  (reduce + (map * bs (apply conj [1] xs))))
+  coefficients.  returns the value from the data generating process,
+  with the default reflecting the DGP with k=3 found in Equation (6)
+  on page 8 of the Cho (2012) paper."
+  [[x1 x2 x3] & {:keys [bs error-sd] :or {bs [14 7 11 -1] error-sd 1}}]
+  (let [e (sample-normal 1 :sd error-sd)]
+    (+ (reduce + (map * bs [1 x1 x2 x3])) e)))
 
 (defn treat-likelihood
   "accepts the thresholds for the supplied collection, returns the
@@ -49,8 +49,7 @@
   [pool]
   (let [[sds means] (map (juxt s/sd s/mean) pool)
         thresh (map + sds means)]
-    (map (partial treat-likelihood thresh)
-         (apply map vector pool))))
+    (map (partial treat-likelihood thresh) pool)))
 
 (defn get-idx
   "accepts a collection and a vector of indices, returns the elements
@@ -64,25 +63,24 @@
   individuals, after some arbitrary handwaving TODO: CLEAN THIS UP.
   ugly."
   [pool n]
-  (let [ls (likelihood-scores pool)
-        sorted-vs (sort-by second > (map-indexed vector ls))
+  (let [like-tuples (map-indexed vector (likelihood-scores pool))
+        sorted-vs (sort-by second > like-tuples)
         idx (map first (take (* 2 n) sorted-vs))]
-    (take n (shuffle (apply map vector (map (partial get-idx idx) pool))))))
+    (take n (shuffle (map #(nth pool %) idx)))))
 
 (defn data-map
   "accepts the number of observations in each pool and the number in
   the treatment group `n`. returns a convenient data map for the
   relevant (sub)samples."
-  [N n]
-  (let [treatment-pool (rand-data N)]
-    {:control (rand-data N)
-     :treatment-group (sub-sample treatment-pool n)}))
+  [& {:keys [N n] :or {N 100000 n 500}}]
+  {:control (rand-data N)
+   :treatment (sub-sample (rand-data N) n)})
 
 (defn hist-treatment
   "plot the histogram for the treatment group."
   [& {:keys [idx-fn] :or {idx-fn first}}]
-  (let [data (data-map 100000 500)
-        X (map idx-fn (:treatment-group data))]
+  (let [data (data-map)
+        X (map idx-fn (:control data))]
     (c/histogram X :nbins 50 :series-label "X1")))
 
 (defn bounding-interval
@@ -117,12 +115,12 @@
   (map vec (apply cartesian-product colls)))
 
 (defn treatment-bins
-  "accepts the treatment pool represented by a (k x N) vector of
+  "accepts the treatment pool represented by a (N x k) vector of
   vectors (not incanter matrix) and returns all bins for the joint
   distribution of the observed treatment group."
-  [pool B]
+  [covariate B]
   (let [breaks (map (partial breakpoints B)
-                    (apply map vector pool))]
+                    (apply map vector covariate))]
     (all-bins (map moving-intervals breaks))))
 
 (defn in-interval?
@@ -149,14 +147,13 @@
                     (map vector bins truth-seq)))))
 
 (defn ref-freq
-  "accepts the full treatment pool (k x N) and a set of bins, and
+  "accepts the full treatment group (n x k) and a set of bins, and
   returns the vectorized version of a map with the values being
   frequencies.  the return structure is necessary for cascalog, which
   does not destructure hash-maps"
-  [treatment-pool bins]
+  [treatment-group bins]
   (map vec
-       (frequencies (map #(val->bin % bins)
-                         treatment-pool))))
+       (frequencies (map #(val->bin % bins) treatment-group))))
 
 (defn find-obs
   "accepts the N observation control pool along with a particular bin
@@ -165,9 +162,10 @@
   `ref-freq`). returns a random sampling of the observations if there
   are more candidates than needed."
   [control-pool [bin count]]
-  (take count
-        (shuffle (filter (partial general-interval bin)
-                         (apply map vector control-pool)))))
+  (let [all-tuple (filter (partial general-interval bin) control-pool)]
+    (->> all-tuple
+         shuffle
+         (take count))))
 
 (defn control-group
   "accepts the control pool, the treatment group, and the number of
