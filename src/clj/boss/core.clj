@@ -31,9 +31,9 @@
   coefficients.  returns the value from the data generating process,
   with the default reflecting the DGP with k=3 found in Equation (6)
   on page 8 of the Cho (2012) paper."
-  [xs {:keys [bs error-sd] :or {bs [14 7 11 -1] error-sd 1}}]
-  (reduce + (map * bs (apply conj [1] xs))
-          (sample-normal 1 :sd error-sd)))
+  [x1 x2 x3 & {:keys [bs error-sd] :or {bs [14 7 11 -1] error-sd 1}}]
+  (let [e (sample-normal 1 :sd error-sd)]
+    (+ (reduce + (map * bs [1 x1 x2 x3])) e)))
 
 (defn treat-likelihood
   "accepts the thresholds for the supplied collection, returns the
@@ -74,13 +74,13 @@
   relevant (sub)samples."
   [N n]
   {:control (rand-data N)
-   :treatment-group (sub-sample (rand-data N) n)})
+   :treatment (sub-sample (rand-data N) n)})
 
 (defn hist-treatment
   "plot the histogram for the treatment group."
   [& {:keys [idx-fn] :or {idx-fn first}}]
   (let [data (data-map 100000 500)
-        X (map idx-fn (:treatment-group data))]
+        X (map idx-fn (:treatment data))]
     (c/histogram X :nbins 50 :series-label "X1")))
 
 (defn bounding-interval
@@ -147,13 +147,13 @@
                     (map vector bins truth-seq)))))
 
 (defn ref-freq
-  "accepts the full treatment pool (N x k) and a set of bins, and
+  "accepts the full treatment group (n x k) and a set of bins, and
   returns the vectorized version of a map with the values being
   frequencies.  the return structure is necessary for cascalog, which
   does not destructure hash-maps"
-  [treatment-pool bins]
+  [treatment-group bins]
   (map vec
-       (frequencies (map #(val->bin % bins) treatment-pool))))
+       (frequencies (map #(val->bin % bins) treatment-group))))
 
 (defn find-obs
   "accepts the N observation control pool along with a particular bin
