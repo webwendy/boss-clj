@@ -2,7 +2,9 @@
   "Command line interface for running BOSS."
   (:gen-class)
   (:use [boss.core]
-        [clojure.tools.cli]))
+        [clojure.tools.cli])
+  (:require [incanter.core :as i]
+            [incanter.charts :as c]))
 
 (defn parse-args
   "Parse command line argument string."
@@ -21,17 +23,36 @@
          ["-p" "--num_population" "Number of people in population group."
           :parse-fn #(Integer. %)
           :default 100000]
-         ["-w" "--workspace" "Workspace directory to save graphs to."
-          :default "/tmp/hylo-sim.png"])
+         ["-w" "--workspace" "Workspace directory to save graphs to."])
     (catch Exception e (do (println (.getMessage e)) nil))))
+
+(defn- match
+  "Execute the BOSS match command using supplied map of args."
+  [args-map]
+  (let [N (:num_population args-map)
+        n (:num_treatment args-map)
+        workspace (:workspace args-map)
+        num-bins (:num_bins args-map)
+        data (data-map :N N :n n)
+        control-grp (control-group (:control data) (:treatment data) num-bins)
+        graph (c/histogram (map first control-grp) :nbins 50 :series-label "X1")]
+    (if workspace
+      (do
+        (println (format "Saving match graph to %s" workspace))
+        (i/save graph workspace))
+      (i/view graph)))
+  (println "Match complete."))
 
 (defn -main
   "Entry point for command line interface."
   [& args]
-  (when-let [[args-map trails usage] (parse-args args)]
-    (if (= "help" (first trails))
+  (let [[args-map trails usage] (parse-args args)
+        command (first trails)]
+    (if (= command "help")
       (println usage)
       (do
-        (println "Running BOSS:" args-map)
-        ;; TODO
+        (println (format "Running BOSS %s: %s" command args-map))
+        (cond
+         (= command "match") (match args-map)
+         :else (println (format "Oops! %s is an unknown command." command)))
         (println "Done!")))))

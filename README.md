@@ -2,7 +2,7 @@
 
 Clojure implementation of the Balance Optimization Subset Selection method.
 
-## Running locally
+## Installation
 
 If you have Git, Clojure, and Lein already installed, you're all set:
 
@@ -16,7 +16,7 @@ Usage:
  -t, --num_treatment   500                Number of people in treatment group.                    
  -b, --num_bins        4                  Number of uniformly sized data bins for each covariant. 
  -p, --num_population  100000             Number of people in population group.                   
- -w, --workspace       /tmp/hylo-sim.png  Workspace directory to save graphs to. 
+ -w, --workspace                          Workspace directory to save graphs to. 
 ```
 
 Otherwise, to easily download everything and run it on your Mac, follow these steps:
@@ -38,6 +38,17 @@ That will take a little while to download and install everything. When it is don
 ```bash
 cd boss-clj
 ./boss help
+```
+
+## Command Line Interface
+
+Right now you can run the `match` command which matches the control group with 
+the covariant distribution of the treatment group. For example, here's matching 
+a treatment group of 500 against a control group of 500000, using 8 bins, and
+writing the resulting histogram to `/tmp/boss-match.png`:
+
+```bash
+$ ./boss match -t 500 -p 500000 -b 8 -w /tmp/boss-match.png
 ```
 
 ## Initial results
