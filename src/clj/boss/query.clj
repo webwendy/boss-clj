@@ -48,7 +48,10 @@
 (defn process-res [prev-coll]
   (ffirst (sort-by second > (iter-step prev-coll))))
 
-(defn test-loop [orig-coll]
+(defn test-loop
+  "example:
+   (test-loop [1 2 3 4 5]) => [99 90 98 96 94]"
+  [orig-coll]
   (loop [coll orig-coll
          i 10]
     (if (neg? i)
