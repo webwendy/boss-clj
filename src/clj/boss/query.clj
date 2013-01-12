@@ -9,47 +9,43 @@
 (def sub-pool (range 5))
 (def pool     (range 100))
 
-(defn my-func [coll]
-  (prn coll)
+(defn my-func [[coll]]
   [(reduce + coll)])
 
-
-(defn replace-chunk [[sub-vec]]
+(defn replace-chunk [sub-vec]
   (vec (conj (take 4 (shuffle sub-vec))
              (nth pool (rand-int 99)))))
 
-(defmapcatop exploder [N sub-vec]
-  (let [f (fn [_]  (set (replace-chunk sub-vec)))]
-    (prn (vec
-          (map vec
-               (set (map f (range N))))))
-    [[(map vec
-           (set (map f (range N))))]]))
+(defmapcatop boom
+  [N tuple]
+  (let [tuples (for [x (range N)] (vec (set (replace-chunk tuple))))
+        tuples (map vec (set tuples))]
+    [[tuples]]))
 
-(defn boss-query
-  [p-results]
-  (let [src [[[p-results]]]]
-    (??<- [?f-val]
-          (src ?a)
-          (exploder 10 ?a :> ?b)
-          (my-func ?b :> ?f-val))))
+(defn bossmode
+  "> (pprint (bossmode [[[1 2 3 4]]]))
+   ([([0 1 2 3 4]
+       [1 2 3 4 70]
+       [1 2 3 4 40]
+       [1 2 3 4 19]
+       [1 2 3 4 51]
+       [1 2 3 4 86]
+       [1 2 3 4 23]
+       [1 2 3 4 26]
+       [1 2 3 4 91]
+       [1 2 3 4 95])
+      10])"
+  [src]
+  (??<- [?b ?f-val]
+        (src ?a)
+        (boom 10 ?a :> ?b)
+        (my-func ?b :> ?f-val)
+        (ops/max ?f-val :> ?f-val)))
 
-   ;; (??<- [?trial-vec]
-   ;;        (src ?orig-vec)
-   ;;        (explode-vec 10 ?orig-vec :> ?trial-vec)
-   ;;        (my-func ?trial-vec :> ?f-val)
-   ;;        (ops/max ?f-val))
-
-
-
-
-(def idx-group (set (range 20)))
-(def idx-pool  (set (range 100)))
-
+(def idx-group (vec (set (range 20))))
+(def idx-pool  (vec (set (range 100))))
 
 (defstruct obs :id :attr)
-
-
 
 (defn random-subgroup [idx-coll n]
   (take n (shuffle idx-coll)))
